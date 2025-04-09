@@ -58,7 +58,16 @@
         {% for prompt in prompts %}
             <div class="bg-white rounded-lg shadow p-4" id="prompt-{{ prompt.id }}">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-medium">{{ prompt.name }}</h3>
+                    <h3 class="text-lg font-medium name-display" id="name-display-{{ prompt.id }}">{{ prompt.name }}</h3>
+                    <div class="name-edit hidden w-full mr-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Name:</label>
+                        <input 
+                            type="text" 
+                            id="name-edit-{{ prompt.id }}" 
+                            class="w-full p-2 border rounded-md"
+                            value="{{ prompt.name }}"
+                        >
+                    </div>
                     <div class="space-x-2">
                         <button
                             onclick="enableEditing('{{ prompt.id }}')"
@@ -108,6 +117,8 @@
         const editBtn = container.querySelector('.edit-btn');
         const saveBtn = container.querySelector('.save-btn');
         const cancelBtn = container.querySelector('.cancel-btn');
+        const nameDisplay = container.querySelector('.name-display');
+        const nameEdit = container.querySelector('.name-edit');
 
         // Convert br tags to newlines for editing
         notes.innerHTML = notes.innerHTML
@@ -117,6 +128,10 @@
             .replace(/<br><br>/g, '\n\n')
             .replace(/<br>/g, '\n');
 
+        // Show name edit field and hide display
+        nameDisplay.classList.add('hidden');
+        nameEdit.classList.remove('hidden');
+        
         notes.contentEditable = true;
         prompt.contentEditable = true;
         notes.classList.add('bg-gray-50');
@@ -131,6 +146,7 @@
         const container = document.getElementById(`prompt-${id}`);
         const notes = container.querySelector('.notes');
         const prompt = container.querySelector('.prompt');
+        const nameInput = document.getElementById(`name-edit-${id}`);
 
         try {
             const response = await fetch(`/prompts/${id}`, {
@@ -139,6 +155,7 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
+                    name: nameInput.value,
                     notes: notes.innerHTML,
                     prompt: prompt.innerHTML
                 })
@@ -169,7 +186,13 @@
         const editBtn = container.querySelector('.edit-btn');
         const saveBtn = container.querySelector('.save-btn');
         const cancelBtn = container.querySelector('.cancel-btn');
+        const nameDisplay = container.querySelector('.name-display');
+        const nameEdit = container.querySelector('.name-edit');
 
+        // Show name display and hide edit field
+        nameDisplay.classList.remove('hidden');
+        nameEdit.classList.add('hidden');
+        
         notes.contentEditable = false;
         prompt.contentEditable = false;
         notes.classList.remove('bg-gray-50');

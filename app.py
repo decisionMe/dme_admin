@@ -33,6 +33,7 @@ templates = Jinja2Templates(directory="templates")
 
 # Data models for request validation
 class PromptUpdate(BaseModel):
+    name: str
     notes: str
     prompt: str
 
@@ -196,6 +197,9 @@ async def update_prompt(
         prompt = db.query(Prompt).filter(Prompt.id == prompt_id).first()
         if not prompt:
             raise HTTPException(status_code=404, detail="Prompt not found")
+        
+        # Update name
+        prompt.name = prompt_data.name
         
         # Handle double line breaks and format for database
         prompt.notes = (prompt_data.notes
