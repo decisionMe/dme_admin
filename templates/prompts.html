@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Prompts - DME Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold">Manage Prompts</h2>
+        <button
+            class="px-4 py-2 bg-blue-600 text-white rounded shadow-lg hover:bg-blue-700"
+            onclick="document.getElementById('new-prompt-form').classList.toggle('hidden')">
+            Add New Prompt
+        </button>
+    </div>
+
+    <!-- Add New Prompt Form -->
+    <form id="new-prompt-form"
+        class="hidden mb-8 bg-white rounded-lg shadow p-6"
+        method="post"
+        action="/prompts/create">
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Name:</label>
+                <input type="text"
+                        name="name"
+                        required
+                        class="w-full p-2 border rounded-md">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Notes:</label>
+                <textarea name="notes"
+                            rows="3"
+                            class="w-full p-2 border rounded-md whitespace-pre-wrap"></textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Prompt:</label>
+                <textarea name="prompt"
+                            required
+                            rows="5"
+                            class="w-full p-2 border rounded-md whitespace-pre-wrap"></textarea>
+            </div>
+            <div class="flex justify-end gap-2 mt-4">
+                <button type="button"
+                        class="px-4 py-2 text-gray-600"
+                        onclick="document.getElementById('new-prompt-form').classList.add('hidden')">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Create Prompt
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Prompts List -->
+    <div class="space-y-4">
+        {% for prompt in prompts %}
+            <div class="bg-white rounded-lg shadow p-4" id="prompt-{{ prompt.id }}">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium">{{ prompt.name }}</h3>
+                    <div class="space-x-2">
+                        <button
+                            onclick="enableEditing('{{ prompt.id }}')"
+                            class="edit-btn px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
+                            Edit
+                        </button>
+                        <button
+                            onclick="savePrompt('{{ prompt.id }}')"
+                            class="save-btn px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 hidden">
+                            Save
+                        </button>
+                        <button
+                            onclick="cancelEditing('{{ prompt.id }}')"
+                            class="cancel-btn px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 hidden">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes:</label>
+                        <div
+                            id="notes-{{ prompt.id }}"
+                            class="notes border rounded-md p-2 min-h-[100px]"
+                            contenteditable="false">{{ prompt.notes|safe }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Prompt:</label>
+                        <div
+                            id="prompt-text-{{ prompt.id }}"
+                            class="prompt border rounded-md p-2 min-h-[100px]"
+                            contenteditable="false">{{ prompt.prompt|safe }}</div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function enableEditing(id) {
+        const container = document.getElementById(`prompt-${id}`);
+        const notes = container.querySelector('.notes');
+        const prompt = container.querySelector('.prompt');
+        const editBtn = container.querySelector('.edit-btn');
+        const saveBtn = container.querySelector('.save-btn');
+        const cancelBtn = container.querySelector('.cancel-btn');
+
+        // Convert br tags to newlines for editing
+        notes.innerHTML = notes.innerHTML
+            .replace(/<br><br>/g, '\n\n')
+            .replace(/<br>/g, '\n');
+        prompt.innerHTML = prompt.innerHTML
+            .replace(/<br><br>/g, '\n\n')
+            .replace(/<br>/g, '\n');
+
+        notes.contentEditable = true;
+        prompt.contentEditable = true;
+        notes.classList.add('bg-gray-50');
+        prompt.classList.add('bg-gray-50');
+
+        editBtn.classList.add('hidden');
+        saveBtn.classList.remove('hidden');
+        cancelBtn.classList.remove('hidden');
+    }
+
+    async function savePrompt(id) {
+        const container = document.getElementById(`prompt-${id}`);
+        const notes = container.querySelector('.notes');
+        const prompt = container.querySelector('.prompt');
+
+        try {
+            const response = await fetch(`/prompts/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    notes: notes.innerHTML,
+                    prompt: prompt.innerHTML
+                })
+            });
+
+            if (response.ok) {
+                disableEditing(id);
+                // Refresh page to show updated content
+                window.location.reload();
+            } else {
+                alert('Failed to save changes');
+            }
+        } catch (error) {
+            alert('Error saving changes');
+            console.error(error);
+        }
+    }
+
+    function cancelEditing(id) {
+        // Simply reload the page to discard changes
+        window.location.reload();
+    }
+
+    function disableEditing(id) {
+        const container = document.getElementById(`prompt-${id}`);
+        const notes = container.querySelector('.notes');
+        const prompt = container.querySelector('.prompt');
+        const editBtn = container.querySelector('.edit-btn');
+        const saveBtn = container.querySelector('.save-btn');
+        const cancelBtn = container.querySelector('.cancel-btn');
+
+        notes.contentEditable = false;
+        prompt.contentEditable = false;
+        notes.classList.remove('bg-gray-50');
+        prompt.classList.remove('bg-gray-50');
+
+        editBtn.classList.remove('hidden');
+        saveBtn.classList.add('hidden');
+        cancelBtn.classList.add('hidden');
+    }
+</script>
+{% endblock %}
