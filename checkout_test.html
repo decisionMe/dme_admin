@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Checkout Test</title>
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; }
+    button { background: #635BFF; color: white; padding: 10px 15px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+    button:hover { background: #4B45C6; }
+  </style>
+</head>
+<body>
+  <h1>DAR Pro I - Checkout Test</h1>
+  <p>Click the button below to test the checkout flow:</p>
+  <button id="checkout-button">Checkout ($30.00)</button>
+
+  <script>
+    // Get your publishable key from environment variable or hardcode it for testing
+    const stripe = Stripe('pk_test_YOUR_PUBLISHABLE_KEY');
+    const checkoutButton = document.getElementById('checkout-button');
+
+    checkoutButton.addEventListener('click', function() {
+      // Create a checkout session on your server
+      fetch('/create-checkout-session', {
+        method: 'POST',
+      })
+      .then(function(response) {
+        return response.json();
+      })
+      .then(function(session) {
+        return stripe.redirectToCheckout({ sessionId: session.id });
+      })
+      .then(function(result) {
+        if (result.error) {
+          alert(result.error.message);
+        }
+      })
+      .catch(function(error) {
+        console.error('Error:', error);
+      });
+    });
+  </script>
+</body>
+</html>

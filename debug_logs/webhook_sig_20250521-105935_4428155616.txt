@@ -1,0 +1,7 @@
+Timestamp: 2025-05-21 10:59:35
+Source: CLI
+Remote Address: 127.0.0.1
+Signature Header: t=1747843175,v1=e66e5c32fefacba96a12245b0b9ab761b3d8753e9aa6a84ec7a5fed719e580d8,v0=b6483fc4c78e1ce73b785a6d73983b64a03faebc529e30969cb9967631de0c7e
+Webhook Secret Type: CLI
+Webhook Secret First 4 Chars: whse***
+Payload Size: 924 bytes

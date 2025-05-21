@@ -1,0 +1,7 @@
+Timestamp: 2025-05-21 10:08:26
+Source: Stripe
+Remote Address: 54.187.205.235
+Signature Header: t=1747840106,v1=f2efc265ca7542e7012e46e9e5033991fc7e9a39c1274a04301ec9d795240314,v0=e7b7e9bed25e10a761f70d7713cceb5a3ab9163f6c6761ed5cbff57ac5b1bf94
+Webhook Secret Type: standard
+Webhook Secret First 4 Chars: whse***
+Payload Size: 3554 bytes

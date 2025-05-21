@@ -1,0 +1,44 @@
+{
+  "id": "evt_1RREFlG7Jw46UFhw1IGQLllE",
+  "object": "event",
+  "api_version": "2025-02-24.acacia",
+  "created": 1747840101,
+  "data": {
+    "object": {
+      "id": "prod_SLw86VOvlr96wp",
+      "object": "product",
+      "active": true,
+      "attributes": [
+
+      ],
+      "created": 1747840101,
+      "default_price": null,
+      "description": "(created by Stripe CLI)",
+      "images": [
+
+      ],
+      "livemode": false,
+      "marketing_features": [
+
+      ],
+      "metadata": {
+      },
+      "name": "myproduct",
+      "package_dimensions": null,
+      "shippable": null,
+      "statement_descriptor": null,
+      "tax_code": null,
+      "type": "service",
+      "unit_label": null,
+      "updated": 1747840101,
+      "url": null
+    }
+  },
+  "livemode": false,
+  "pending_webhooks": 2,
+  "request": {
+    "id": "req_y5Nhx3XODhcei6",
+    "idempotency_key": "60af21eb-603f-4c56-ad6c-dcd23f6ced73"
+  },
+  "type": "product.created"
+}

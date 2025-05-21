@@ -1,0 +1,4 @@
+Timestamp: 2025-05-21 09:35:59
+Signature Header: t=1747838158,v1=827d97dabc572296c7892b46775eb1dbdaaa67e91b24ddbefcd35b4549393bae,v0=d700b058cea8623891418a65f1ff2508148559ef38c998411975a69911a3c661
+Webhook Secret First 4 Chars: whse***
+Payload Size: 2280 bytes
