@@ -6,6 +6,7 @@ from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
+from models.cms import CMS
 import logging
 from typing import Optional
 from pydantic import BaseModel
@@ -188,6 +189,38 @@ async def list_prompts(
                 "error": "Failed to load prompts from database"
             }
         )
+
+@app.get("/cms/about")
+async def cms(request: Request):
+    """Display the About page"""
+    # Check if user is logged in
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not session_token or not verify_session_token(session_token):
+        logger.info("User not authenticated, redirecting to login")
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+
+    return templates.TemplateResponse(
+        "about.html",
+        {"request": request, "is_authenticated": True, "cms_page": "about"}
+    )
+
+@app.post("/cms/about/update")
+async def cms_update_about(request: Request, content: str = Form(...), db: Session = Depends(get_db)):
+    try:
+        about = db.query(CMS).filter_by(field_name="about").first()
+
+        if about:
+            about.html_content = content
+        else:
+            about = CMS(field_name="about", html_content=content)
+
+        db.add(about)
+        db.commit()
+
+        return "About page updated successfully"
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {str(e)}")
+        return "Failed to update about page"
 
 @app.get("/subscription/recovery")
 async def subscription_recovery_page(request: Request, db: Session = Depends(get_db)):

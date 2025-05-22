@@ -25,7 +25,11 @@
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold">DME Admin Portal</h1>
             {% if is_authenticated %}
-            <a href="/logout" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800">Logout</a>
+            <div>
+                <a href="/prompts" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800">Prompts</a>
+                <a href="/cms/about" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800">CMS</a>
+                <a href="/logout" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800">Logout</a>
+            </div>
             {% endif %}
         </div>
     </header>
