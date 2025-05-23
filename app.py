@@ -204,7 +204,7 @@ async def cms(request: Request, db: Session = Depends(get_db)):
     company = db.query(Company).first()
 
     if not company:
-        company = Company(id=1)
+        company = Company(id=1,name="DecisionMe")
         db.add(company)
         db.commit()
 
@@ -226,7 +226,7 @@ async def cms_update_about(request: Request, content: str = Form(...), db: Sessi
         company = db.query(Company).first()
 
         if not company:
-            company = Company(id=1)
+            company = Company(id=1,name="DecisionMe")
             db.add(company)
             db.commit()
 
