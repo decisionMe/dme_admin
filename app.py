@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from models.cms import CMS
 from models.tree_node import TreeNode
+from models.company import Company
 import logging
 from typing import Optional
 from pydantic import BaseModel
@@ -200,10 +201,17 @@ async def cms(request: Request, db: Session = Depends(get_db)):
         logger.info("User not authenticated, redirecting to login")
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
 
-    about = db.query(CMS).filter_by(field_name="about",company_id=1).first()
+    company = db.query(Company).first()
+
+    if not company:
+        company = Company(id=1)
+        db.add(company)
+        db.commit()
+
+    about = db.query(CMS).filter_by(field_name="about",company_id=company.id).first()
 
     if not about:
-        about = CMS(field_name="about", html_content="", company_id=1)
+        about = CMS(field_name="about", html_content="", company_id=company.id)
         db.add(about)
         db.commit()
 
@@ -215,12 +223,19 @@ async def cms(request: Request, db: Session = Depends(get_db)):
 @app.post("/cms/about/update")
 async def cms_update_about(request: Request, content: str = Form(...), db: Session = Depends(get_db)):
     try:
-        about = db.query(CMS).filter_by(field_name="about",company_id=1).first()
+        company = db.query(Company).first()
+
+        if not company:
+            company = Company(id=1)
+            db.add(company)
+            db.commit()
+
+        about = db.query(CMS).filter_by(field_name="about",company_id=company.id).first()
 
         if about:
             about.html_content = content
         else:
-            about = CMS(field_name="about", html_content=content)
+            about = CMS(field_name="about", html_content=content, company_id=company.id)
 
         db.add(about)
         db.commit()
@@ -302,6 +317,19 @@ async def delete_node(node_id: int, request: Request, db: Session = Depends(get_
         {"request": request, "nodes": TreeNode.get_nodes(db)}
     )
 
+@app.get("/cms/tutorials")
+async def cms_tutorials(request: Request, db: Session = Depends(get_db)):
+    """Display the Tutorials page"""
+    # Check if user is logged in
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not session_token or not verify_session_token(session_token):
+        logger.info("User not authenticated, redirecting to login")
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+
+    return templates.TemplateResponse(
+        "tutorials.html",
+        {"request": request, "is_authenticated": True, "cms_page": "tutorials"}
+    )
 
 @app.get("/subscription/recovery")
 async def subscription_recovery_page(request: Request, db: Session = Depends(get_db)):
