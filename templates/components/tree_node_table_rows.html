@@ -1,0 +1,20 @@
+{% macro render_node(node) %}
+  <tr>
+    <td class="p-4 pl-{{ 4 + (node.level * 4) }} whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-200">
+      {{ node.title }}
+    </td>
+    <td class="p-4 whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-200">{{ "Text" if node.is_document else "URL" if node.is_url else "Parent" }}</td>
+    <td class="p-4 whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-200">{{ node.level }}</td>
+    <td class="p-4 text-center border-b border-gray-200">
+      <i
+        class="fa fa-trash text-red-600 cursor-pointer"
+        hx-delete="/cms/help-center/delete/{{ node.id }}"
+        hx-target="#help-center-table"
+        hx-confirm="Are you sure you want to delete: {{ node.title }} and it's children?"></i>
+    </td>
+  </tr>
+  
+  {% for child in node.children %}
+    {{ render_node(child) }}
+  {% endfor %}
+{% endmacro %}

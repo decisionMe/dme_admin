@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
+from models.company import Company
 from database import Base
 
 class CMS(Base):
@@ -18,7 +19,7 @@ class CMS(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    # company = relationship("Company", back_populates="cms")
+    company = relationship("Company", back_populates="cms")
     # cms_lists = relationship("CMSList", back_populates="cms", cascade="all, delete-orphan")
 
     # Unique constraint for field_name and company_id combination

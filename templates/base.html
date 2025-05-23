@@ -6,6 +6,10 @@
     <title>{% block title %}DME Admin{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://kit.fontawesome.com/dafd8b728d.js" crossorigin="anonymous"></script>
+    <!-- Import Quill CSS (text editor) -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+
     <style>
         .notes, .prompt {
             white-space: pre-wrap !important;
@@ -49,6 +53,9 @@
             <p>DME Admin Portal</p>
         </div>
     </footer>
+
+    <!-- Import Quill JS (text editor) -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 
     {% block scripts %}{% endblock %}
 </body>

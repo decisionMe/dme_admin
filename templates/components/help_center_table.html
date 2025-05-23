@@ -1,0 +1,17 @@
+{% from "components/tree_node_table_rows.html" import render_node %}
+
+<table class="w-full border bg-white border-gray-200 mb-4">
+  <thead>
+    <tr>
+      <th class="text-left p-4 border-b border-gray-300">Title</th>
+      <th class="text-left p-4 border-b border-gray-300">Type</th>
+      <th class="text-left p-4 border-b border-gray-300">Level</th>
+      <th class="text-left p-4 border-b border-gray-300"></th>
+    </tr>
+  </thead>
+  <tbody class="divide-y divide-gray-100">
+    {% for node in nodes %}
+      {{ render_node(node) }}
+    {% endfor %}
+  </tbody>
+</table>

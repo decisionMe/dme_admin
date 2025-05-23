@@ -1,26 +1,56 @@
-{% extends "base.html" %}
-
-{% block title %}About Page - DME Admin{% endblock %}
-
+{% extends "base.html" %} {% block title %}About Page - DME Admin{% endblock %}
 {% block content %}
 <div class="max-w-4xl mx-auto">
   {% include "components/cms_menu.html" %}
-  <form id="edit-about-form"
+  <form
+    id="edit-about-form"
     class="mb-8 bg-white rounded-lg shadow p-6"
     hx-post="/cms/about/update"
     hx-target="#message-box"
     hx-swap="innerHTML"
-    hx-trigger="submit">
+    hx-trigger="submit"
+  >
     <div class="space-y-4">
       <div id="message-box"></div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Content:</label>
-        <textarea name="content" rows="5" class="w-full p-2 border rounded-md whitespace-pre-wrap"></textarea>
+        <div id="editor"></div>
+        <input
+          type="hidden"
+          name="content"
+          class="w-full h-8"
+          id="quill-content"
+          value="{{ about_content }}"
+        />
       </div>
       <div class="flex justify-end gap-2 mt-4">
-        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+        <button
+          type="submit"
+          class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Save
+        </button>
       </div>
     </div>
   </form>
 </div>
+{% endblock %} {% block scripts %}
+<script>
+  window.quill = null;
+
+  document.addEventListener("DOMContentLoaded", function () {
+    window.quill = new Quill("#editor", {
+      theme: "snow",
+      modules: {
+        toolbar: [["bold", "italic", "underline"]],
+      },
+    });
+
+    window.quill.on('text-change', () => {
+      document.getElementById("quill-content").value = window.quill.root.innerHTML;
+    });
+
+    window.quill.root.innerHTML = document.getElementById("quill-content").value;
+  });
+</script>
 {% endblock %}
