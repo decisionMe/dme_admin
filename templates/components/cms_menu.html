@@ -1,0 +1,23 @@
+<div class="flex justify-between items-center mb-6">
+  <h2 class="text-2xl font-bold">Content Management System</h2>
+  <div class="flex space-x-2">
+    <a
+      href="/cms/about"
+      class="px-4 py-2 text-blue-600 rounded shadow-lg border border-blue-600 hover:bg-blue-600 hover:text-white {% if cms_page == 'about' %}bg-blue-600 text-white{% endif %}"
+    >
+      About Page
+    </a>
+    <a
+      href="/cms/help-center"
+      class="px-4 py-2 text-blue-600 rounded shadow-lg border border-blue-600 hover:bg-blue-600 hover:text-white {% if cms_page == 'help-center' %}bg-blue-600 text-white{% endif %}"
+    >
+      Help Center
+    </a>
+    <a
+      href="/cms/tutorials"
+      class="px-4 py-2 text-blue-600 rounded shadow-lg border border-blue-600 hover:bg-blue-600 hover:text-white"
+    >
+      Tutorials
+    </a>
+  </div>
+</div>
