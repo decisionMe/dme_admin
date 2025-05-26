@@ -5,7 +5,11 @@
     </td>
     <td class="p-4 whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-200">{{ "Text" if node.is_document else "URL" if node.is_url else "Parent" }}</td>
     <td class="p-4 whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-200">{{ node.level }}</td>
-    <td class="p-4 text-center border-b border-gray-200">
+    <td class="p-4 text-center border-b border-gray-200" width="100">
+      <a href="/cms/help-center/edit/{{ node.id }}">
+        <i class="fa fa-edit text-gray-600 cursor-pointer mr-4"></i>
+      </a>
+
       <i
         class="fa fa-trash text-red-600 cursor-pointer"
         hx-delete="/cms/help-center/delete/{{ node.id }}"
