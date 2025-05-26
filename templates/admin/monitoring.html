@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+
+{% block title %}Subscription Monitoring - DME Admin{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .monitoring-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .metric-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        height: 100%;
+    }
+    
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0.5rem 0;
+    }
+    
+    .metric-label {
+        color: #6b7280;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .metric-success {
+        color: #10b981;
+    }
+    
+    .metric-danger {
+        color: #ef4444;
+    }
+    
+    .metric-warning {
+        color: #f59e0b;
+    }
+    
+    .alert-card {
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .alert-high {
+        background-color: #fee2e2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+    }
+    
+    .alert-medium {
+        background-color: #fef3c7;
+        border: 1px solid #fde68a;
+        color: #92400e;
+    }
+    
+    .alert-low {
+        background-color: #dbeafe;
+        border: 1px solid #bfdbfe;
+        color: #1e40af;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-top: 1rem;
+    }
+    
+    .failure-item {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="monitoring-container">
+    <!-- Page Header -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Subscription Monitoring</h1>
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4 text-sm">
+                <a href="/prompts" class="text-blue-600 hover:text-blue-800">← Back to Prompts</a>
+                <span class="text-gray-400">|</span>
+                <a href="/admin/subscription-validation" class="text-blue-600 hover:text-blue-800">Subscription Settings</a>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="refreshData()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    <i class="fas fa-sync-alt mr-2"></i>Refresh
+                </button>
+                <select id="period-selector" onchange="changePeriod()" class="px-3 py-2 border border-gray-300 rounded-md">
+                    <option value="1">Last 24 hours</option>
+                    <option value="7" selected>Last 7 days</option>
+                    <option value="30">Last 30 days</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts Section -->
+    <div id="alerts-section" class="mb-6" style="display: none;">
+        <h2 class="text-xl font-semibold mb-3">Active Alerts</h2>
+        <div id="alerts-container"></div>
+    </div>
+
+    <!-- Metrics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <!-- Total Validations -->
+        <div class="metric-card">
+            <div class="metric-label">Total Validations</div>
+            <div class="metric-value" id="total-validations">
+                <span class="loading-spinner"></span>
+            </div>
+            <div class="text-sm text-gray-600">
+                <span id="validation-success-rate"></span>
+            </div>
+        </div>
+        
+        <!-- Failed Validations -->
+        <div class="metric-card">
+            <div class="metric-label">Failed Validations</div>
+            <div class="metric-value metric-danger" id="failed-validations">
+                <span class="loading-spinner"></span>
+            </div>
+            <div class="text-sm text-gray-600">
+                <span id="unique-users-affected"></span>
+            </div>
+        </div>
+        
+        <!-- Stripe API Success -->
+        <div class="metric-card">
+            <div class="metric-label">Stripe API Health</div>
+            <div class="metric-value" id="stripe-success-rate">
+                <span class="loading-spinner"></span>
+            </div>
+            <div class="text-sm text-gray-600">
+                Avg: <span id="stripe-avg-response"></span>ms
+            </div>
+        </div>
+        
+        <!-- Total Redirects -->
+        <div class="metric-card">
+            <div class="metric-label">User Redirects</div>
+            <div class="metric-value metric-warning" id="total-redirects">
+                <span class="loading-spinner"></span>
+            </div>
+            <div class="text-sm text-gray-600">
+                To subscription page
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Validation Timeline -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold mb-4">Validation Checks Over Time</h3>
+            <div class="chart-container">
+                <canvas id="validation-chart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Stripe API Timeline -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold mb-4">Stripe API Calls Over Time</h3>
+            <div class="chart-container">
+                <canvas id="stripe-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Failures -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold mb-4">Recent Failures</h3>
+        <div id="failures-container">
+            <div class="text-center py-4">
+                <span class="loading-spinner"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let validationChart = null;
+let stripeChart = null;
+let currentPeriod = 7;
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    refreshData();
+    
+    // Check alerts every minute
+    setInterval(checkAlerts, 60000);
+});
+
+function initializeCharts() {
+    // Validation Chart
+    const validationCtx = document.getElementById('validation-chart').getContext('2d');
+    validationChart = new Chart(validationCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Total Checks',
+                data: [],
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.1
+            }, {
+                label: 'Failed',
+                data: [],
+                borderColor: 'rgb(239, 68, 68)',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Stripe Chart
+    const stripeCtx = document.getElementById('stripe-chart').getContext('2d');
+    stripeChart = new Chart(stripeCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Total Calls',
+                data: [],
+                borderColor: 'rgb(34, 197, 94)',
+                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                tension: 0.1
+            }, {
+                label: 'Failed',
+                data: [],
+                borderColor: 'rgb(239, 68, 68)',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function changePeriod() {
+    currentPeriod = parseInt(document.getElementById('period-selector').value);
+    refreshData();
+}
+
+async function refreshData() {
+    try {
+        // Load summary data
+        const summaryResponse = await fetch(`/api/admin/monitoring/summary?days=${currentPeriod}`);
+        const summaryData = await summaryResponse.json();
+        updateMetrics(summaryData);
+        
+        // Load timeline data
+        const timelineResponse = await fetch(`/api/admin/monitoring/timeline?days=${currentPeriod}`);
+        const timelineData = await timelineResponse.json();
+        updateCharts(timelineData);
+        
+        // Load recent failures
+        const failuresResponse = await fetch('/api/admin/monitoring/recent-failures');
+        const failuresData = await failuresResponse.json();
+        updateFailures(failuresData);
+        
+        // Check alerts
+        checkAlerts();
+        
+    } catch (error) {
+        console.error('Error refreshing data:', error);
+    }
+}
+
+function updateMetrics(data) {
+    // Update validation metrics
+    document.getElementById('total-validations').textContent = data.validation.total_checks.toLocaleString();
+    document.getElementById('failed-validations').textContent = data.validation.failed.toLocaleString();
+    document.getElementById('validation-success-rate').textContent = `${data.validation.success_rate}% success rate`;
+    document.getElementById('unique-users-affected').textContent = `${data.redirects.unique_users} unique users`;
+    
+    // Update Stripe metrics
+    const stripeRateElement = document.getElementById('stripe-success-rate');
+    stripeRateElement.textContent = `${data.stripe_api.success_rate}%`;
+    stripeRateElement.className = 'metric-value ' + (data.stripe_api.success_rate >= 95 ? 'metric-success' : 'metric-danger');
+    document.getElementById('stripe-avg-response').textContent = data.stripe_api.avg_response_time_ms;
+    
+    // Update redirects
+    document.getElementById('total-redirects').textContent = data.redirects.total.toLocaleString();
+}
+
+function updateCharts(data) {
+    // Update validation chart
+    validationChart.data.labels = data.validation_timeline.dates;
+    validationChart.data.datasets[0].data = data.validation_timeline.total;
+    validationChart.data.datasets[1].data = data.validation_timeline.failed;
+    validationChart.update();
+    
+    // Update Stripe chart
+    stripeChart.data.labels = data.stripe_timeline.dates;
+    stripeChart.data.datasets[0].data = data.stripe_timeline.total;
+    stripeChart.data.datasets[1].data = data.stripe_timeline.failed;
+    stripeChart.update();
+}
+
+function updateFailures(data) {
+    const container = document.getElementById('failures-container');
+    
+    if (data.failures.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center py-4">No recent failures</p>';
+        return;
+    }
+    
+    let html = '';
+    data.failures.forEach(failure => {
+        const date = new Date(failure.created_at).toLocaleString();
+        html += `
+            <div class="failure-item">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="font-medium">${failure.event_type.replace('_', ' ').toUpperCase()}</span>
+                    <span class="text-sm text-gray-500">${date}</span>
+                </div>
+                ${failure.user_email ? `<p class="text-sm text-gray-600">User: ${failure.user_email}</p>` : ''}
+                ${failure.error_message ? `<p class="text-sm text-red-600">Error: ${failure.error_message}</p>` : ''}
+                ${failure.details ? `<p class="text-xs text-gray-500 mt-1">Details: ${failure.details}</p>` : ''}
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+async function checkAlerts() {
+    try {
+        const response = await fetch('/api/admin/monitoring/alerts');
+        const data = await response.json();
+        
+        const alertsSection = document.getElementById('alerts-section');
+        const alertsContainer = document.getElementById('alerts-container');
+        
+        if (data.alerts.length === 0) {
+            alertsSection.style.display = 'none';
+            return;
+        }
+        
+        alertsSection.style.display = 'block';
+        let html = '';
+        
+        data.alerts.forEach(alert => {
+            const severityClass = `alert-${alert.severity}`;
+            const icon = alert.severity === 'high' ? 'fa-exclamation-triangle' : 'fa-exclamation-circle';
+            
+            html += `
+                <div class="alert-card ${severityClass}">
+                    <i class="fas ${icon}"></i>
+                    <div>
+                        <div class="font-medium">${alert.message}</div>
+                        ${alert.details ? `<div class="text-sm mt-1">${JSON.stringify(alert.details)}</div>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        
+        alertsContainer.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error checking alerts:', error);
+    }
+}
+</script>
+{% endblock %}

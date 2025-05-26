@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}Subscription Validation Settings - DME Admin{% endblock %}
+
+{% block head %}
+<style>
+    .settings-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .settings-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #374151;
+    }
+    
+    .form-help {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 24px;
+    }
+    
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e0;
+        transition: .4s;
+        border-radius: 24px;
+    }
+    
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+        background-color: #3b82f6;
+    }
+    
+    input:checked + .slider:before {
+        transform: translateX(24px);
+    }
+    
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .status-enabled {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-disabled {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .info-box {
+        background-color: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-box h4 {
+        color: #1e40af;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .info-box ul {
+        margin-left: 1.25rem;
+        color: #3730a3;
+        font-size: 0.9rem;
+    }
+    
+    .info-box li {
+        margin-bottom: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <!-- Page Header -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Subscription Validation Settings</h1>
+        <div class="flex items-center space-x-4 text-sm">
+            <a href="/prompts" class="text-blue-600 hover:text-blue-800">← Back to Prompts</a>
+            <span class="text-gray-400">|</span>
+            <a href="/subscription/recovery" class="text-blue-600 hover:text-blue-800">Subscription Recovery</a>
+        </div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="info-box">
+        <h4>About Subscription Validation</h4>
+        <ul class="list-disc">
+            <li>When enabled, users must have an active subscription to access protected resources</li>
+            <li>Users without valid subscriptions will be redirected to the specified landing page</li>
+            <li>If no landing page URL is set, users will be redirected to <code>/subscription-required</code></li>
+            <li>This setting affects all subscription-protected endpoints in the main application</li>
+        </ul>
+    </div>
+
+    <!-- Current Status -->
+    <div class="settings-card">
+        <h2 class="text-xl font-semibold mb-4">Current Status</h2>
+        <div class="flex items-center space-x-4">
+            <span class="text-gray-700">Subscription Validation:</span>
+            <span id="current-status-badge" class="status-indicator {% if subscription_validation_enabled %}status-enabled{% else %}status-disabled{% endif %}">
+                {% if subscription_validation_enabled %}Enabled{% else %}Disabled{% endif %}
+            </span>
+        </div>
+        {% if subscription_landing_page_url %}
+        <div class="mt-2 text-sm text-gray-600">
+            Redirect URL: <span class="font-mono">{{ subscription_landing_page_url }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Settings Form -->
+    <div class="settings-card">
+        <h2 class="text-xl font-semibold mb-4">Configuration</h2>
+        
+        <!-- Success/Error Messages -->
+        <div id="message-container"></div>
+        
+        <form id="settings-form" method="POST">
+            <!-- CSRF Token (generated dynamically) -->
+            <input type="hidden" id="csrf_token" name="csrf_token" value="">
+            
+            <!-- Enable/Disable Toggle -->
+            <div class="form-group">
+                <label class="form-label">Enable Subscription Validation</label>
+                <div class="flex items-center space-x-4">
+                    <label class="toggle-switch">
+                        <input type="checkbox" 
+                               id="subscription_validation_enabled" 
+                               name="subscription_validation_enabled"
+                               {% if subscription_validation_enabled %}checked{% endif %}>
+                        <span class="slider"></span>
+                    </label>
+                    <span id="toggle-text" class="text-gray-700">
+                        {% if subscription_validation_enabled %}Validation is ON{% else %}Validation is OFF{% endif %}
+                    </span>
+                </div>
+                <p class="form-help">
+                    Toggle this to enable or disable subscription validation across the application
+                </p>
+            </div>
+            
+            <!-- Landing Page URL -->
+            <div class="form-group">
+                <label for="subscription_landing_page_url" class="form-label">
+                    Subscription Landing Page URL
+                </label>
+                <input type="url" 
+                       id="subscription_landing_page_url" 
+                       name="subscription_landing_page_url"
+                       value="{{ subscription_landing_page_url or '' }}"
+                       placeholder="https://example.com/subscribe"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <p class="form-help">
+                    URL where users will be redirected when subscription validation fails. 
+                    Leave blank to use the default subscription page at <code>/subscription-required</code>.
+                </p>
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="flex justify-end space-x-3">
+                <button type="button" 
+                        onclick="location.reload()" 
+                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                    Reset
+                </button>
+                <button type="submit" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    Save Settings
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Generate a simple CSRF token (in production, this should come from the server)
+function generateCSRFToken() {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
+// Set CSRF token on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = generateCSRFToken();
+    document.getElementById('csrf_token').value = csrfToken;
+    
+    // Store token in sessionStorage for validation
+    sessionStorage.setItem('csrf_token', csrfToken);
+});
+
+// Update toggle text
+document.getElementById('subscription_validation_enabled').addEventListener('change', function() {
+    const toggleText = document.getElementById('toggle-text');
+    toggleText.textContent = this.checked ? 'Validation is ON' : 'Validation is OFF';
+});
+
+// Form submission handler
+document.getElementById('settings-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const messageContainer = document.getElementById('message-container');
+    const submitButton = e.target.querySelector('button[type="submit"]');
+    
+    // Clear previous messages
+    messageContainer.innerHTML = '';
+    
+    // Disable submit button
+    submitButton.disabled = true;
+    submitButton.textContent = 'Saving...';
+    
+    // Get form data
+    const formData = new FormData(e.target);
+    const enabled = formData.get('subscription_validation_enabled') === 'on';
+    const url = formData.get('subscription_landing_page_url').trim();
+    
+    // Validate URL if provided
+    if (url && !isValidUrl(url)) {
+        showMessage('error', 'Please enter a valid URL starting with http:// or https://');
+        submitButton.disabled = false;
+        submitButton.textContent = 'Save Settings';
+        return;
+    }
+    
+    // Prepare data
+    const data = {
+        subscription_validation_enabled: enabled,
+        subscription_landing_page_url: url
+    };
+    
+    try {
+        const response = await fetch('/api/admin/subscription-settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': formData.get('csrf_token')
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            showMessage('success', 'Settings saved successfully!');
+            
+            // Update status badge
+            const statusBadge = document.getElementById('current-status-badge');
+            statusBadge.textContent = enabled ? 'Enabled' : 'Disabled';
+            statusBadge.className = 'status-indicator ' + (enabled ? 'status-enabled' : 'status-disabled');
+            
+            // Generate new CSRF token
+            const newToken = generateCSRFToken();
+            document.getElementById('csrf_token').value = newToken;
+            sessionStorage.setItem('csrf_token', newToken);
+        } else {
+            showMessage('error', result.error || 'Failed to save settings');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('error', 'An error occurred while saving settings');
+    } finally {
+        // Re-enable submit button
+        submitButton.disabled = false;
+        submitButton.textContent = 'Save Settings';
+    }
+});
+
+// URL validation function
+function isValidUrl(string) {
+    try {
+        const url = new URL(string);
+        return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch (_) {
+        return false;
+    }
+}
+
+// Show message function
+function showMessage(type, message) {
+    const messageContainer = document.getElementById('message-container');
+    const alertClass = type === 'success' 
+        ? 'bg-green-100 border-green-400 text-green-700' 
+        : 'bg-red-100 border-red-400 text-red-700';
+    
+    messageContainer.innerHTML = `
+        <div class="${alertClass} border px-4 py-3 rounded relative mb-4" role="alert">
+            <span class="block sm:inline">${message}</span>
+            <span class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" onclick="this.parentElement.remove()">
+                <svg class="fill-current h-6 w-6" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <title>Close</title>
+                    <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+                </svg>
+            </span>
+        </div>
+    `;
+    
+    // Auto-hide success messages after 5 seconds
+    if (type === 'success') {
+        setTimeout(() => {
+            messageContainer.innerHTML = '';
+        }, 5000);
+    }
+}
+</script>
+{% endblock %}

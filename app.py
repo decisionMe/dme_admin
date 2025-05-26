@@ -42,6 +42,8 @@ from middleware import RawBodyMiddleware
 
 # Import routes
 from routes.subscription import router as subscription_router
+from routes.admin_subscription import router as admin_subscription_router
+from routes.monitoring import router as monitoring_router
 
 # Create debug directory if enabled
 if os.getenv("SAVE_WEBHOOK_BODIES", "false").lower() == "true" or \
@@ -64,6 +66,14 @@ logger.info("RawBodyMiddleware added for Stripe webhooks")
 # Include subscription router
 app.include_router(subscription_router)
 logger.info("Subscription router included")
+
+# Include admin subscription router
+app.include_router(admin_subscription_router)
+logger.info("Admin subscription router included")
+
+# Include monitoring router
+app.include_router(monitoring_router)
+logger.info("Monitoring router included")
 
 # Template configuration
 templates = Jinja2Templates(directory="templates")
@@ -322,6 +332,26 @@ async def update_prompt(
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
+# Subscription Required/Expired Page
+@app.get("/subscription-required")
+@app.get("/subscription-expired")
+async def subscription_required(request: Request):
+    """Default page shown when subscription is required or expired"""
+    # Get support email from environment or use default
+    support_email = os.getenv("SUPPORT_EMAIL", "support@decisionme.ai")
+    
+    # Get subscription URL from environment or use default
+    subscription_url = os.getenv("SUBSCRIPTION_URL", "/subscribe")
+    
+    return templates.TemplateResponse(
+        "subscription_required.html",
+        {
+            "request": request,
+            "support_email": support_email,
+            "subscription_url": subscription_url
+        }
+    )
+
 # Diagnostic endpoint for webhook testing
 @app.get("/webhook-config")
 async def webhook_config():
@@ -349,12 +379,15 @@ async def create_checkout_session():
                         'name': 'DAR Pro I',
                     },
                     'unit_amount': 3000,  # $30.00
+                    'recurring': {
+                        'interval': 'year'
+                    }
                 },
                 'quantity': 1,
             }],
-            mode='payment',
-            success_url=os.getenv("APP_URL", "http://localhost:8001") + "/checkout-success?session_id={CHECKOUT_SESSION_ID}",
-            cancel_url=os.getenv("APP_URL", "http://localhost:8001") + "/checkout-cancel",
+            mode='subscription',
+            success_url=os.getenv("APP_URL", "http://localhost:8001") + "/subscription/stripe/success?session_id={CHECKOUT_SESSION_ID}",
+            cancel_url=os.getenv("APP_URL", "http://localhost:8001") + "/error?reason=checkout_cancelled",
         )
         return {"id": session.id}
     except Exception as e:
@@ -362,50 +395,6 @@ async def create_checkout_session():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/checkout-success")
-async def checkout_success(session_id: str):
-    """Success page after successful checkout"""
-    return HTMLResponse(f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Checkout Success</title>
-        <style>
-            body {{ font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; }}
-            .success {{ color: green; }}
-            pre {{ background: #f4f4f4; padding: 10px; border-radius: 4px; }}
-        </style>
-    </head>
-    <body>
-        <h1>Checkout Successful!</h1>
-        <p class="success">Your payment was processed successfully.</p>
-        <p>Session ID: <pre>{session_id}</pre></p>
-        <p>This page represents the redirect back to your application after a successful payment.</p>
-        <p>Check your database to see if a record was created for this session.</p>
-    </body>
-    </html>
-    """)
-
-@app.get("/checkout-cancel")
-async def checkout_cancel():
-    """Cancel page if user cancels checkout"""
-    return HTMLResponse("""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Checkout Cancelled</title>
-        <style>
-            body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; }
-            .cancelled { color: red; }
-        </style>
-    </head>
-    <body>
-        <h1>Checkout Cancelled</h1>
-        <p class="cancelled">You cancelled the checkout process.</p>
-        <p>No payment was processed and no records were created.</p>
-    </body>
-    </html>
-    """)
 
 
 @app.get("/test-checkout")

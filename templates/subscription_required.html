@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Required - DecisionMe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .hero-pattern {
+            background-color: #ffffff;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .fade-in-delay-1 {
+            animation: fadeIn 0.6s ease-out 0.2s both;
+        }
+        
+        .fade-in-delay-2 {
+            animation: fadeIn 0.6s ease-out 0.4s both;
+        }
+    </style>
+</head>
+<body class="hero-pattern flex items-center justify-center p-4">
+    <div class="max-w-4xl w-full">
+        <!-- Main Card -->
+        <div class="glass-effect rounded-2xl p-8 md:p-12 fade-in">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-red-100 rounded-full mb-4">
+                    <i class="fas fa-lock text-red-600 text-3xl"></i>
+                </div>
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
+                    Subscription Required
+                </h1>
+                <p class="text-lg text-gray-600">
+                    Access to this feature requires an active subscription
+                </p>
+            </div>
+            
+            <!-- Benefits Section -->
+            <div class="bg-gray-50 rounded-xl p-6 mb-8 fade-in-delay-1">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 text-center">
+                    What You'll Get with a Subscription
+                </h2>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h3 class="font-semibold text-gray-800 mb-1">AI-Powered Decisions</h3>
+                        <p class="text-sm text-gray-600">
+                            Get intelligent recommendations for your toughest choices
+                        </p>
+                    </div>
+                    <div class="text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="font-semibold text-gray-800 mb-1">Analytics & Insights</h3>
+                        <p class="text-sm text-gray-600">
+                            Track your decision patterns and improve over time
+                        </p>
+                    </div>
+                    <div class="text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-infinity"></i>
+                        </div>
+                        <h3 class="font-semibold text-gray-800 mb-1">Unlimited Access</h3>
+                        <p class="text-sm text-gray-600">
+                            Make unlimited decisions with full feature access
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- CTA Section -->
+            <div class="text-center space-y-4 fade-in-delay-2">
+                <a href="{{ subscription_url }}" 
+                   class="inline-block btn-gradient text-white font-semibold py-4 px-8 rounded-lg text-lg">
+                    <i class="fas fa-rocket mr-2"></i>
+                    Get Started Now
+                </a>
+                
+                <p class="text-gray-600">
+                    Starting at just <span class="font-semibold">$30/year</span>
+                </p>
+            </div>
+            
+            <!-- Support Section -->
+            <div class="mt-12 pt-8 border-t border-gray-200 text-center">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">
+                    Need Help?
+                </h3>
+                <p class="text-gray-600 mb-4">
+                    If you believe you already have an active subscription or need assistance,<br>
+                    please contact our support team.
+                </p>
+                <div class="space-y-2">
+                    <a href="mailto:{{ support_email }}" 
+                       class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
+                        <i class="fas fa-envelope mr-2"></i>
+                        {{ support_email }}
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Alternative Actions -->
+            <div class="mt-8 text-center">
+                <a href="/" class="text-gray-500 hover:text-gray-700 text-sm">
+                    <i class="fas fa-arrow-left mr-1"></i>
+                    Return to Home
+                </a>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="text-center mt-6 text-white text-sm">
+            <p class="opacity-80">
+                &copy; 2024 DecisionMe. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

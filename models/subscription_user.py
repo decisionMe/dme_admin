@@ -12,6 +12,7 @@ class SubscriptionUser(Base):
 
     subscription_id = Column(String, primary_key=True, index=True)
     email = Column(String, nullable=True)
+    purchaser_email = Column(String, nullable=True)
     auth0_id = Column(String, nullable=True, index=True)
     registration_status = Column(
         Enum("PAYMENT_COMPLETED", "AUTH0_INVITE_SENT", "AUTH0_ACCOUNT_LINKED", name="registration_status"),

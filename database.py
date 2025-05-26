@@ -1,3 +1,11 @@
+"""
+Database configuration for dme_admin.
+
+IMPORTANT: This project shares a database with the d-me project.
+All database migrations should be created and run from the d-me project using Alembic.
+DO NOT create or run migrations in this project.
+"""
+
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -8,6 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Get the database URL from environment variable
+# This database is shared with the d-me project
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/dme")
 
 # Create SQLAlchemy engine
