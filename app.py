@@ -273,10 +273,58 @@ async def cms_help_center(request: Request, db: Session = Depends(get_db)):
         }
     )
 
+@app.get("/cms/help-center/add")
+async def cms_help_center_add(request: Request, db: Session = Depends(get_db)):
+    """Display the Help Center add node page"""
+    # Check if user is logged in
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not session_token or not verify_session_token(session_token):
+        logger.info("User not authenticated, redirecting to login")
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+
+    nodes = TreeNode.get_nodes(db)
+
+    return templates.TemplateResponse(
+        "help-center-add.html",
+        {
+            "request": request,
+            "is_authenticated": True,
+            "cms_page": "help-center",
+            "nodes": nodes
+        }
+    )
+
+@app.get("/cms/help-center/edit/{node_id}")
+async def cms_help_center_edit(request: Request, node_id: int, db: Session = Depends(get_db)):
+    """Display the Help Center edit node page"""
+    # Check if user is logged in
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not session_token or not verify_session_token(session_token):
+        logger.info("User not authenticated, redirecting to login")
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+
+    node = TreeNode.get_node_by_id(node_id, db)
+
+    if not node:
+        return RedirectResponse(url="/cms/help-center", status_code=status.HTTP_302_FOUND)
+
+    nodes = TreeNode.get_nodes(db, node.id)
+
+    return templates.TemplateResponse(
+        "help-center-edit.html",
+        {
+            "request": request,
+            "is_authenticated": True,
+            "cms_page": "help-center",
+            "node": node,
+            "nodes": nodes
+        }
+    )
+
 @app.post("/cms/help-center/create")
 async def cms_create_help_center_node(request: Request, title: str = Form(...), parent_id: int = Form(None), node_type: str = Form(...), html_content: str = Form(None), external_url: str = Form(None), db: Session = Depends(get_db)):
     try:
-        parent_id = None if parent_id == "0" else parent_id
+        parent_id = None if parent_id == 0 else parent_id
 
         node = TreeNode(
             title=title,
@@ -302,9 +350,41 @@ async def cms_create_help_center_node(request: Request, title: str = Form(...), 
             {"request": request, "message": "Failed to create node."}
         )
 
+@app.post("/cms/help-center/update/{node_id}")
+async def cms_update_help_center_node(request: Request, node_id: int, title: str = Form(...), parent_id: int = Form(None), node_type: str = Form(...), html_content: str = Form(None), external_url: str = Form(None), db: Session = Depends(get_db)):
+    try:
+        node = TreeNode.get_node_by_id(node_id, db)
+
+        if not node:
+            return RedirectResponse(url="/cms/help-center", status_code=status.HTTP_302_FOUND)
+
+        node.title = title
+        node.parent_id = None if parent_id == 0 else parent_id
+        node.is_document = node_type=="document"
+        node.is_url = node_type=="url"
+        node.html_content = html_content
+        node.external_url = external_url
+
+        db.add(node)
+        db.commit()
+
+        return templates.TemplateResponse(
+            "components/help_center_table.html",
+            {"request": request, "nodes": TreeNode.get_nodes(db)}
+        )
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {str(e)}")
+
+        return templates.TemplateResponse(
+            "components/error_message.html",
+            {"request": request, "message": "Failed to update node."}
+        )
+
 @app.delete("/cms/help-center/delete/{node_id}")
 async def delete_node(node_id: int, request: Request, db: Session = Depends(get_db)):
     node = db.query(TreeNode).filter(TreeNode.id == node_id).first()
+
+    logger.info("Deleting node" + str(node_id))
 
     if not node:
         return {"error": "Not found"}

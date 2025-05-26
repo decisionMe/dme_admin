@@ -28,7 +28,7 @@ class TreeNode(Base):
     children = relationship(
         "TreeNode",
         backref="parent",
-        cascade="all",  # Removed delete-orphan
+        cascade="save-update, merge",
         order_by="TreeNode.title",
         remote_side=[id]  # This indicates the "one" side of the relationship
     )
@@ -40,15 +40,15 @@ class TreeNode(Base):
         else:
             return self.parent.get_path() + [self]
 
-    def get_nodes(db: Session):
+    def get_nodes(db: Session, self_id: int = None):
         from models.tree_node import TreeNode
 
         # Fetch nodes without parent
-        root_nodes = db.query(TreeNode).filter(TreeNode.parent_id == None).order_by(TreeNode.title).all()
+        root_nodes = db.query(TreeNode).filter(TreeNode.parent_id == None, TreeNode.id != self_id).order_by(TreeNode.title).all()
         
         # Fetch children nodes
         def get_children(node, level=1):
-            children = db.query(TreeNode).filter(TreeNode.parent_id == node.id).order_by(TreeNode.title).all()
+            children = db.query(TreeNode).filter(TreeNode.parent_id == node.id, TreeNode.id != self_id).order_by(TreeNode.title).all()
             
             return [
                 {
@@ -79,6 +79,9 @@ class TreeNode(Base):
         ]
 
         return node_list
+
+    def get_node_by_id(node_id: int, db: Session):
+        return db.query(TreeNode).filter(TreeNode.id == node_id).first()
 
     @property
     def level(self):
