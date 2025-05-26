@@ -6,6 +6,9 @@ from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
+from models.cms import CMS
+from models.tree_node import TreeNode
+from models.company import Company
 import logging
 from typing import Optional
 from pydantic import BaseModel
@@ -198,6 +201,145 @@ async def list_prompts(
                 "error": "Failed to load prompts from database"
             }
         )
+
+@app.get("/cms/about")
+async def cms(request: Request, db: Session = Depends(get_db)):
+    """Display the About page"""
+    # Check if user is logged in
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not session_token or not verify_session_token(session_token):
+        logger.info("User not authenticated, redirecting to login")
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+
+    company = db.query(Company).first()
+
+    if not company:
+        company = Company(id=1,name="DecisionMe")
+        db.add(company)
+        db.commit()
+
+    about = db.query(CMS).filter_by(field_name="about",company_id=company.id).first()
+
+    if not about:
+        about = CMS(field_name="about", html_content="", company_id=company.id)
+        db.add(about)
+        db.commit()
+
+    return templates.TemplateResponse(
+        "about.html",
+        {"request": request, "is_authenticated": True, "cms_page": "about", "about_content": about.html_content}
+    )
+
+@app.post("/cms/about/update")
+async def cms_update_about(request: Request, content: str = Form(...), db: Session = Depends(get_db)):
+    try:
+        company = db.query(Company).first()
+
+        if not company:
+            company = Company(id=1,name="DecisionMe")
+            db.add(company)
+            db.commit()
+
+        about = db.query(CMS).filter_by(field_name="about",company_id=company.id).first()
+
+        if about:
+            about.html_content = content
+        else:
+            about = CMS(field_name="about", html_content=content, company_id=company.id)
+
+        db.add(about)
+        db.commit()
+
+        return templates.TemplateResponse(
+            "components/success_message.html",
+            {"request": request, "message": "Content has been updated!"}
+        )
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {str(e)}")
+
+        return templates.TemplateResponse(
+            "components/error_message.html",
+            {"request": request, "message": "Failed to update content."}
+        )
+
+@app.get("/cms/help-center")
+async def cms_help_center(request: Request, db: Session = Depends(get_db)):
+    """Display the Help Center page"""
+    # Check if user is logged in
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not session_token or not verify_session_token(session_token):
+        logger.info("User not authenticated, redirecting to login")
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+
+    nodes = TreeNode.get_nodes(db)
+
+    return templates.TemplateResponse(
+        "help-center.html",
+        {
+            "request": request,
+            "is_authenticated": True,
+            "cms_page": "help-center",
+            "nodes": nodes
+        }
+    )
+
+@app.post("/cms/help-center/create")
+async def cms_create_help_center_node(request: Request, title: str = Form(...), parent_id: int = Form(None), node_type: str = Form(...), html_content: str = Form(None), external_url: str = Form(None), db: Session = Depends(get_db)):
+    try:
+        parent_id = None if parent_id == "0" else parent_id
+
+        node = TreeNode(
+            title=title,
+            parent_id=parent_id,
+            is_document=node_type=="document",
+            is_url=node_type=="url",
+            html_content=html_content,
+            external_url=external_url
+        )
+
+        db.add(node)
+        db.commit()
+
+        return templates.TemplateResponse(
+            "components/help_center_table.html",
+            {"request": request, "nodes": TreeNode.get_nodes(db)}
+        )
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {str(e)}")
+
+        return templates.TemplateResponse(
+            "components/error_message.html",
+            {"request": request, "message": "Failed to create node."}
+        )
+
+@app.delete("/cms/help-center/delete/{node_id}")
+async def delete_node(node_id: int, request: Request, db: Session = Depends(get_db)):
+    node = db.query(TreeNode).filter(TreeNode.id == node_id).first()
+
+    if not node:
+        return {"error": "Not found"}
+
+    db.delete(node)
+    db.commit()
+
+    return templates.TemplateResponse(
+        "components/help_center_table.html",
+        {"request": request, "nodes": TreeNode.get_nodes(db)}
+    )
+
+@app.get("/cms/tutorials")
+async def cms_tutorials(request: Request, db: Session = Depends(get_db)):
+    """Display the Tutorials page"""
+    # Check if user is logged in
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not session_token or not verify_session_token(session_token):
+        logger.info("User not authenticated, redirecting to login")
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+
+    return templates.TemplateResponse(
+        "tutorials.html",
+        {"request": request, "is_authenticated": True, "cms_page": "tutorials"}
+    )
 
 @app.get("/subscription/recovery")
 async def subscription_recovery_page(request: Request, db: Session = Depends(get_db)):

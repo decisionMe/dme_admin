@@ -6,6 +6,10 @@
     <title>{% block title %}DME Admin{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://kit.fontawesome.com/dafd8b728d.js" crossorigin="anonymous"></script>
+    <!-- Import Quill CSS (text editor) -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+
     <style>
         .notes, .prompt {
             white-space: pre-wrap !important;
@@ -25,7 +29,11 @@
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold">DME Admin Portal</h1>
             {% if is_authenticated %}
-            <a href="/logout" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800">Logout</a>
+            <div>
+                <a href="/prompts" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800">Prompts</a>
+                <a href="/cms/about" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800">CMS</a>
+                <a href="/logout" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800">Logout</a>
+            </div>
             {% endif %}
         </div>
     </header>
@@ -45,6 +53,9 @@
             <p>DME Admin Portal</p>
         </div>
     </footer>
+
+    <!-- Import Quill JS (text editor) -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 
     {% block scripts %}{% endblock %}
 </body>

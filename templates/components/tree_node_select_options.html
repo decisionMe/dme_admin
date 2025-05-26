@@ -1,0 +1,9 @@
+{% macro render_node_select(node, parent_title) %}
+  {% if not node.is_url and not node.is_document %}
+    <option value="{{ node.id }}">{{ parent_title }} {{ node.title }}</option>
+    
+    {% for child in node.children %}
+      {{ render_node_select(child, parent_title + node.title + ' > ') }}
+    {% endfor %}
+  {% endif %}
+{% endmacro %}
