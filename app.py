@@ -481,10 +481,10 @@ async def subscription_required(request: Request):
     """Default page shown when subscription is required or expired"""
     # Get support email from environment or use default
     support_email = os.getenv("SUPPORT_EMAIL", "support@decisionme.ai")
-    
+
     # Get subscription URL from environment or use default
     subscription_url = os.getenv("SUBSCRIPTION_URL", "/subscribe")
-    
+
     return templates.TemplateResponse(
         "subscription_required.html",
         {
@@ -506,7 +506,6 @@ async def webhook_config():
         "debug_enabled": os.getenv("SAVE_WEBHOOK_BODIES", "false").lower() == "true",
         "debug_signatures": os.getenv("DEBUG_SIGNATURES", "false").lower() == "true"
     }
-
 
 @app.post("/create-checkout-session")
 async def create_checkout_session():
@@ -536,9 +535,6 @@ async def create_checkout_session():
         logger.error(f"Error creating checkout session: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-
-
 @app.get("/test-checkout")
 async def test_checkout():
     """Serve the checkout test page"""
@@ -546,11 +542,9 @@ async def test_checkout():
         content = f.read()
     return HTMLResponse(content)
 
-
 # Run the application
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", "8000"))
     logger.info(f"Starting server on port {port}")
     uvicorn.run("app:app", host="0.0.0.0", port=port, reload=True)
-    

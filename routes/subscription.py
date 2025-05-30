@@ -11,9 +11,11 @@ import stripe  # Add this import
 from pydantic import BaseModel
 from typing import Optional
 from auth import verify_admin
+from datetime import datetime
 
 from database import get_db
 from models.subscription_user import SubscriptionUser
+from models.subscription import Subscription
 from services.stripe_service import verify_stripe_signature
 from services.auth0_service import (
     send_auth0_invitation,
@@ -55,7 +57,7 @@ async def stripe_success(
         # Retrieve the session from Stripe to get complete details
         session = stripe.checkout.Session.retrieve(
             session_id,
-            expand=["subscription"]
+            expand=["subscription", "subscription.default_payment_method"]
         )
 
         logger.info(f"✅ CHECKPOINT 5: Successfully retrieved session! Mode: {session.mode}, Status: {session.status}")
@@ -116,6 +118,9 @@ async def stripe_success(
         db.merge(user)  # This will insert or update as needed
         db.commit()
         logger.info(f"✅ CHECKPOINT 19: User record created/updated for subscription {subscription_id}")
+
+        # After AUTH0_ACCOUNT_LINKED, create the subscription record for the client app
+        # This will be done in the auth0 callback when registration is complete
 
         if is_gift and recipient_email:
             logger.info(f"🎁 CHECKPOINT 20: Processing gift subscription for {recipient_email}")
@@ -226,11 +231,15 @@ async def recover_subscription(
     logger.info(f"Processing admin recovery request for subscription {request.subscription_id}")
 
     try:
-        from services.stripe_service import verify_subscription_exists
+        from services.stripe_service import get_subscription_with_payment_method
 
-        # Verify the subscription exists in Stripe
-        logger.debug(f"Verifying subscription exists in Stripe")
+        # Get subscription details from Stripe
+        logger.debug(f"Getting subscription details from Stripe")
+        from services.stripe_service import verify_subscription_exists
         verify_subscription_exists(request.subscription_id)
+        
+        # Retrieve full subscription details
+        subscription = stripe.Subscription.retrieve(request.subscription_id)
 
         logger.info(f"Admin recovery for subscription {request.subscription_id}, email {request.email}")
 
@@ -244,6 +253,9 @@ async def recover_subscription(
         db.merge(user)
         db.commit()
         logger.debug(f"User record created/updated for subscription {request.subscription_id}")
+
+        # Note: Admin recovery doesn't create subscription record yet since we don't have auth0_id
+        # The subscription record will be created when the user completes Auth0 registration
 
         # Send Auth0 invitation
         logger.debug(f"Sending Auth0 invitation to {request.email}")

@@ -31,7 +31,7 @@ def is_valid_url(url: str) -> bool:
     """Validate URL format"""
     if not url:
         return True  # Empty URL is valid (optional field)
-    
+
     # Basic URL pattern
     url_pattern = re.compile(
         r'^https?://'  # http:// or https://
@@ -40,7 +40,7 @@ def is_valid_url(url: str) -> bool:
         r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
         r'(?::\d+)?'  # optional port
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-    
+
     return url_pattern.match(url) is not None
 
 @router.get("/admin/subscription-validation")
@@ -51,7 +51,7 @@ async def subscription_validation_page(request: Request, db: Session = Depends(g
     if not session_token or not verify_session_token(session_token):
         logger.info("User not authenticated, redirecting to login")
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
-    
+
     try:
         # Get current config
         config = GlobalConfig.get(db)
@@ -64,7 +64,7 @@ async def subscription_validation_page(request: Request, db: Session = Depends(g
             )
             db.add(config)
             db.commit()
-        
+
         return templates.TemplateResponse(
             "admin/subscription_validation.html",
             {
@@ -97,7 +97,7 @@ async def get_subscription_settings(
     session_token = request.cookies.get(SESSION_COOKIE_NAME)
     if not session_token or not verify_session_token(session_token):
         raise HTTPException(status_code=401, detail="Unauthorized")
-    
+
     try:
         config = GlobalConfig.get(db)
         if not config:
@@ -129,7 +129,7 @@ async def update_subscription_settings(
     session_token = request.cookies.get(SESSION_COOKIE_NAME)
     if not session_token or not verify_session_token(session_token):
         raise HTTPException(status_code=401, detail="Unauthorized")
-    
+
     try:
         # Parse request body
         data = await request.json()

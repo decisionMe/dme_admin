@@ -151,3 +151,31 @@ def verify_subscription_exists(subscription_id):
     except Exception as e:
         logger.error(f"Error verifying subscription {subscription_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def get_subscription_with_payment_method(subscription_id):
+    """Get subscription details including payment method"""
+    try:
+        logger.debug(f"Retrieving subscription {subscription_id} with payment method")
+        subscription = stripe.Subscription.retrieve(
+            subscription_id,
+            expand=["default_payment_method"]
+        )
+        
+        payment_method_id = None
+        if subscription.default_payment_method:
+            # If it's an object, get the ID
+            if hasattr(subscription.default_payment_method, 'id'):
+                payment_method_id = subscription.default_payment_method.id
+            # If it's a string, use it directly
+            elif isinstance(subscription.default_payment_method, str):
+                payment_method_id = subscription.default_payment_method
+        
+        logger.debug(f"Subscription retrieved: {subscription.id}, payment_method: {payment_method_id}")
+        return subscription, payment_method_id
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error retrieving subscription {subscription_id}: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error retrieving subscription {subscription_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
