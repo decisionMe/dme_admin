@@ -13,7 +13,9 @@ if not ADMIN_PASSWORD:
     raise ValueError("ADMIN_PASSWORD environment variable is not set")
 
 # Create a serializer for session cookies
-SECRET_KEY = os.urandom(24).hex()  # Generate a random secret key on startup
+SECRET_KEY = os.getenv("SESSION_SECRET_KEY", os.urandom(24).hex())
+if not SECRET_KEY:
+    print("WARNING: SESSION_SECRET_KEY not set, using random key. Sessions will not persist across restarts.")
 serializer = URLSafeSerializer(SECRET_KEY)
 
 # Cookie name for the session
