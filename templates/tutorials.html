@@ -2,6 +2,37 @@
 {% block content %}
 <div class="max-w-4xl mx-auto">
   {% include "components/cms_menu.html" %}
-  
+
+  <div id="tutorials-table">
+    {% include "components/tutorials_table.html" %}
+  </div>
+
+  <a href="/cms/tutorials/add" class="px-4 py-2 text-blue-600 rounded shadow-lg border border-blue-600 hover:bg-blue-600 hover:text-white">
+    Add Tutorial
+  </a>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+<script>
+const table = document.getElementById('sortable')
+
+new Sortable(table, {
+  animation: 150,
+  onEnd: function (evt) {
+    const listOfIds = Array.from(table.rows).map(row => row.dataset.id)
+
+    Array.from(table.rows).forEach((row, index) => {
+      row.querySelector('td:first-child').textContent = index;
+    });
+
+    htmx.ajax('POST', '/cms/tutorials/update-sequence', {
+      values: { listOfIds },
+      swap: 'none'
+    });
+  }
+})
+</script>
 {% endblock %}

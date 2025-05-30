@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Tutorials - DME Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+  {% include "components/cms_menu.html" %}
+  <form
+    class="mt-2 gap-4 flex flex-col"
+    hx-post="/cms/tutorials/update"
+    hx-trigger="submit"
+    hx-on="htmx:afterRequest: window.location.href='/cms/tutorials'"
+    id="new-node-form">
+    <div class="flex flex-col">
+      <label class="font-medium text-sm mb-1">Title</label>
+      <input name="title" class="border border-gray-200 rounded-lg px-2 py-1 outline-none text-sm" type="text" value="{{ tutorial.title }}" />
+    </div>
+    <div class="flex flex-col">
+      <label class="font-medium text-sm mb-1">Link</label>
+      <input id="youtube-link" name="link" class="border border-gray-200 rounded-lg px-2 py-1 outline-none text-sm" type="text" value="{{ tutorial.content }}" />
+    </div>
+    <div class="flex flex-col">
+      <label class="font-medium text-sm mb-1">Image</label>
+      <div id="image-thumbnail">
+        {% if tutorial.image %}
+          <img src="{{ tutorial.image }}" class="w-64 h-36 object-cover rounded-lg" alt="Thumbnail" />
+        {% else %}
+          <span class="text-sm text-gray-700">Fill the YouTube link above to see the thumbnail</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 mt-4">
+      <input type="hidden" name="image" id="image" value="{{ tutorial.image }}" />
+      <input type="hidden" name="tutorial_id" value="{{ tutorial.id }}" />
+
+      <button type="button" class="px-4 py-2 text-gray-600" onclick="window.location.href='/cms/tutorials'">Cancel</button>
+      <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById("youtube-link").addEventListener("input", function() {
+        const link = this.value;
+        const thumbnail = document.getElementById("image-thumbnail");
+        const imageInput = document.getElementById("image");
+        
+        if (link) {
+            thumbnail.innerHTML = `<img src="https://img.youtube.com/vi/${link.split("=")[1]}/maxresdefault.jpg" class="w-64 h-36 object-cover rounded-lg" alt="Thumbnail" />`;
+            imageInput.value = `https://img.youtube.com/vi/${link.split("=")[1]}/maxresdefault.jpg`;
+        } else {
+            thumbnail.innerHTML = `<span class="text-sm text-gray-700">Fill the YouTube link above to see the thumbnail</span>`;
+            imageInput.value = "";
+        }
+    });
+</script>
+{% endblock %}
+

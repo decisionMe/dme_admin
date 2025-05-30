@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from models.cms import CMS
+from models.cms_list import CMSList
 from models.tree_node import TreeNode
 from models.company import Company
 import logging
@@ -274,7 +275,7 @@ async def cms_help_center(request: Request, db: Session = Depends(get_db)):
     nodes = TreeNode.get_nodes(db)
 
     return templates.TemplateResponse(
-        "help-center.html",
+        "help_center.html",
         {
             "request": request,
             "is_authenticated": True,
@@ -295,7 +296,7 @@ async def cms_help_center_add(request: Request, db: Session = Depends(get_db)):
     nodes = TreeNode.get_nodes(db)
 
     return templates.TemplateResponse(
-        "help-center-add.html",
+        "help_center_add.html",
         {
             "request": request,
             "is_authenticated": True,
@@ -321,7 +322,7 @@ async def cms_help_center_edit(request: Request, node_id: int, db: Session = Dep
     nodes = TreeNode.get_nodes(db, node.id)
 
     return templates.TemplateResponse(
-        "help-center-edit.html",
+        "help_center_edit.html",
         {
             "request": request,
             "is_authenticated": True,
@@ -416,10 +417,157 @@ async def cms_tutorials(request: Request, db: Session = Depends(get_db)):
         logger.info("User not authenticated, redirecting to login")
         return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
 
+    cms_list = CMSList.get_tutorials(db)
+
     return templates.TemplateResponse(
         "tutorials.html",
+        {
+            "request": request,
+            "is_authenticated": True,
+            "cms_page": "tutorials",
+            "cms_list": cms_list
+        }
+    )
+
+@app.get("/cms/tutorials/add")
+async def cms_tutorials_add(request: Request, db: Session = Depends(get_db)):
+    """Display the Tutorials add page"""
+    # Check if user is logged in
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not session_token or not verify_session_token(session_token):
+        logger.info("User not authenticated, redirecting to login")
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+
+    return templates.TemplateResponse(
+        "tutorials_add.html",
         {"request": request, "is_authenticated": True, "cms_page": "tutorials"}
     )
+
+@app.get("/cms/tutorials/edit/{tutorial_id}")
+async def cms_tutorials_edit(request: Request, tutorial_id: str, db: Session = Depends(get_db)):
+    """Display the Tutorials add page"""
+    # Check if user is logged in
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not session_token or not verify_session_token(session_token):
+        logger.info("User not authenticated, redirecting to login")
+        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+
+    tutorial = db.query(CMSList).filter_by(id=tutorial_id).first()
+
+    if not tutorial:
+        return RedirectResponse(url="/cms/tutorials", status_code=status.HTTP_302_FOUND)
+
+    return templates.TemplateResponse(
+        "tutorials_edit.html",
+        {"request": request, "is_authenticated": True, "cms_page": "tutorials", "tutorial": tutorial}
+    )
+
+@app.post("/cms/tutorials/create")
+async def cms_create_tutorial(request: Request, title: str = Form(...), image: str = Form(...), link: str = Form(...), db: Session = Depends(get_db)):
+    try:
+        company = db.query(Company).first()
+        cms = db.query(CMS).filter_by(field_name="tutorials",company_id=company.id).first()
+
+        if not cms:
+            cms = CMS(field_name="tutorials", html_content="", company_id=company.id)
+
+            db.add(cms)
+            db.commit()
+
+        sequence = db.query(CMSList).filter_by(cms_id=cms.id).count()
+
+        list = CMSList(
+            title=title,
+            image=image,
+            sequence=sequence,
+            content=link,
+            cms_id=cms.id
+        )
+
+        db.add(list)
+        db.commit()
+
+        return True
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {str(e)}")
+
+        return templates.TemplateResponse(
+            "components/error_message.html",
+            {"request": request, "message": "Failed to create tutorial."}
+        )
+
+@app.post("/cms/tutorials/update")
+async def cms_update_tutorial(request: Request, title: str = Form(...), image: str = Form(...), link: str = Form(...), tutorial_id: str = Form(...), db: Session = Depends(get_db)):
+    try:
+        tutorial = db.query(CMSList).filter_by(id=tutorial_id).first()
+
+        if not tutorial:
+            return RedirectResponse(url="/cms/tutorials", status_code=status.HTTP_302_FOUND)
+
+        tutorial.title = title
+        tutorial.image = image
+        tutorial.content = link
+
+        db.add(tutorial)
+        db.commit()
+
+        return True
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {str(e)}")
+
+        return templates.TemplateResponse(
+            "components/error_message.html",
+            {"request": request, "message": "Failed to update tutorial."}
+        )
+
+@app.post("/cms/tutorials/update-sequence")
+async def cms_update_tutorial_sequence(request: Request, listOfIds: list = Form(...), db: Session = Depends(get_db)):
+    try:
+        company = db.query(Company).first()
+        cms = db.query(CMS).filter_by(field_name="tutorials",company_id=company.id).first()
+
+        if not cms:
+            return False
+
+        for item in listOfIds:
+            list = db.query(CMSList).filter_by(id=item).first()
+
+            if list:
+                list.sequence = listOfIds.index(item)
+
+        db.commit()
+
+        return True
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {str(e)}")
+
+        return templates.TemplateResponse(
+            "components/error_message.html",
+            {"request": request, "message": "Failed to update tutorial sequence."}
+        )
+
+@app.delete("/cms/tutorials/delete/{tutorial_id}")
+async def cms_delete_tutorial(tutorial_id: str, request: Request, db: Session = Depends(get_db)):
+    try:
+        tutorial = db.query(CMSList).filter_by(id=tutorial_id).first()
+
+        if not tutorial:
+            return RedirectResponse(url="/cms/tutorials", status_code=status.HTTP_302_FOUND)
+
+        db.delete(tutorial)
+        db.commit()
+
+        return templates.TemplateResponse(
+            "components/tutorials_table.html",
+            {"request": request, "cms_list": CMSList.get_tutorials(db)}
+        )
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {str(e)}")
+
+        return templates.TemplateResponse(
+            "components/error_message.html",
+            {"request": request, "message": "Failed to delete tutorial."}
+        )
 
 @app.get("/subscription/recovery")
 async def subscription_recovery_page(request: Request, db: Session = Depends(get_db)):
