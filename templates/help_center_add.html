@@ -5,24 +5,24 @@
 
   {% from "components/tree_node_select_options.html" import render_node_select %}
 
-  <h3 class="font-bold text-lg border-b border-gray-200 pb-2">Edit node: {{node.title}}</h3>
+  <h3 class="font-bold text-lg border-b border-gray-200 pb-2">Create a new node</h3>
 
   <form
     class="mt-2 gap-4 flex flex-col"
-    hx-post="/cms/help-center/update/{{ node.id }}"
+    hx-post="/cms/help-center/create"
     hx-trigger="submit"
     hx-on="htmx:afterRequest: window.location.href='/cms/help-center'"
     id="new-node-form">
     <div class="flex flex-col">
       <label class="font-medium text-sm mb-1">Title</label>
-      <input name="title" class="border border-gray-200 rounded-lg px-2 py-1 outline-none text-sm" type="text" value="{{node.title}}" />
+      <input name="title" class="border border-gray-200 rounded-lg px-2 py-1 outline-none text-sm" type="text" />
     </div>
     <div class="flex flex-col">
       <label class="font-medium text-sm mb-1">Parent</label>
       <select name="parent_id" class="border border-gray-200 rounded-lg px-2 py-1 outline-none text-sm">
         <option value="0">No parent</option>
         {% for parent_node in nodes %}
-          {{ render_node_select(parent_node, '', node.parent_id) }}
+          {{ render_node_select(parent_node, '') }}
         {% endfor %}
       </select>
     </div>
@@ -30,21 +30,21 @@
       <label class="font-medium text-sm mb-1">Type</label>
       <select id="node-type" name="node_type" class="border border-gray-200 rounded-lg px-2 py-1 outline-none text-sm">
         <option value="">Parent</option>
-        <option value="document" {% if node.is_document %}selected{% endif %}>Text</option>
-        <option value="url" {% if node.is_url %}selected{% endif %}>URL</option>
+        <option value="document">Text</option>
+        <option value="url">URL</option>
       </select>
     </div>
-    <div class="flex flex-col {% if not node.is_document %}hidden{% endif %}" id="text-content-input">
+    <div class="flex flex-col hidden" id="text-content-input">
       <label class="font-medium text-sm mb-1" id="content-title">Content</label>
-      <textarea class="border border-gray-200 rounded-lg px-2 py-1 outline-none text-sm" name="html_content">{{node.html_content}}</textarea>
+      <textarea class="border border-gray-200 rounded-lg px-2 py-1 outline-none text-sm" name="html_content"></textarea>
     </div>
-    <div class="flex flex-col {% if not node.is_url %}hidden{% endif %}" id="url-content-input">
+    <div class="flex flex-col hidden" id="url-content-input">
       <label class="font-medium text-sm mb-1" id="content-title">URL</label>
-      <input class="border border-gray-200 rounded-lg px-2 py-1 outline-none text-sm" name="external_url" type="text" value="{{node.external_url}}" />
+      <input class="border border-gray-200 rounded-lg px-2 py-1 outline-none text-sm" name="external_url" type="text" />
     </div>
     <div class="flex justify-end gap-2 mt-4">
       <button type="button" class="px-4 py-2 text-gray-600" onclick="window.location.href='/cms/help-center'">Cancel</button>
-      <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+      <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Create Node</button>
     </div>
   </form>
 </div>

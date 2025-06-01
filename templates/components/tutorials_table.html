@@ -1,0 +1,28 @@
+<table class="w-full border bg-white border-gray-200 mb-4">
+  <thead>
+    <tr>
+      <th class="text-left p-4 border-b border-gray-300">Seq.</th>
+      <th class="text-left p-4 border-b border-gray-300">Title</th>
+      <th class="text-left p-4 border-b border-gray-300"></th>
+    </tr>
+  </thead>
+  <tbody class="divide-y divide-gray-100" id="sortable">
+    {% for item in cms_list %}
+    <tr data-id="{{ item.id }}" class="cursor-move">
+      <td class="p-4 whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-200">{{ item.sequence }}</td>
+      <td class="p-4 whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-200">{{ item.title }}</td>
+      <td class="p-4 text-center border-b border-gray-200">
+        <a href="/cms/tutorials/edit/{{ item.id }}">
+          <i class="fa fa-edit text-gray-600 cursor-pointer mr-4"></i>
+        </a>
+  
+        <i
+          class="fa fa-trash text-red-600 cursor-pointer"
+          hx-delete="/cms/tutorials/delete/{{ item.id }}"
+          hx-target="#tutorials-table"
+          hx-confirm="Are you sure you want to delete: '{{ item.title }}'?"></i>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

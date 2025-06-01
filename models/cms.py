@@ -20,7 +20,7 @@ class CMS(Base):
 
     # Relationships
     company = relationship("Company", back_populates="cms")
-    # cms_lists = relationship("CMSList", back_populates="cms", cascade="all, delete-orphan")
+    cms_lists = relationship("CMSList", back_populates="cms", cascade="all, delete-orphan")
 
     # Unique constraint for field_name and company_id combination
     __table_args__ = (
