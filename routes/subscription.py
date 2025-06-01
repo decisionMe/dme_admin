@@ -188,6 +188,7 @@ async def auth0_callback(
         logger.debug(f"Decoding ID token")
         user_info = jwt.decode(
             id_token,
+            algorithms=["RS256"],
             options={"verify_signature": False}
         )
         logger.debug(f"ID token decoded, subject: {user_info.get('sub')}")
