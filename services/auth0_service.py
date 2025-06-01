@@ -79,6 +79,7 @@ def create_auth0_authorize_url(subscription_id):
         f"?response_type=code"
         f"&client_id={AUTH0_CLIENT_ID}"
         f"&redirect_uri={REDIRECT_URI}"
+        f"&scope=openid profile email"
         f"&state={subscription_id}"
     )
 
