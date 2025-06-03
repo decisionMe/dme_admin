@@ -34,9 +34,19 @@
         <option value="url">URL</option>
       </select>
     </div>
-    <div class="flex flex-col hidden" id="text-content-input">
+    <div
+      class="flex flex-col hidden"
+      id="text-content-input"
+    >
       <label class="font-medium text-sm mb-1" id="content-title">Content</label>
-      <textarea class="border border-gray-200 rounded-lg px-2 py-1 outline-none text-sm" name="html_content"></textarea>
+      <div id="text-editor" class="bg-white min-h-[100px]"></div>
+
+      <input
+        name="html_content"
+        type="hidden"
+        value=""
+        id="quill-content"
+      />
     </div>
     <div class="flex flex-col hidden" id="url-content-input">
       <label class="font-medium text-sm mb-1" id="content-title">URL</label>
@@ -63,6 +73,23 @@
     if (value === 'url') {
       document.getElementById('url-content-input').classList.remove('hidden')
     }
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    window.quill = new Quill("#text-editor", {
+      theme: "snow",
+      modules: {
+        toolbar: [["bold", "italic", "underline"]],
+      },
+    });
+
+    window.quill.on("text-change", () => {
+      document.getElementById("quill-content").value =
+        window.quill.root.innerHTML;
+    });
+
+    window.quill.root.innerHTML =
+      document.getElementById("quill-content").value;
   });
 </script>
 {% endblock %}

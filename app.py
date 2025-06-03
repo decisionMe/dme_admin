@@ -337,13 +337,19 @@ async def cms_create_help_center_node(request: Request, title: str = Form(...), 
     try:
         parent_id = None if parent_id == 0 else parent_id
 
+        if parent_id is not None:
+            sequence = db.query(TreeNode).filter_by(parent_id=parent_id).count()
+        else:
+            sequence = db.query(TreeNode).filter_by(parent_id=None).count()
+
         node = TreeNode(
             title=title,
             parent_id=parent_id,
             is_document=node_type=="document",
             is_url=node_type=="url",
             html_content=html_content,
-            external_url=external_url
+            external_url=external_url,
+            sequence=sequence
         )
 
         db.add(node)
