@@ -15,3 +15,24 @@
   </a>
 </div>
 {% endblock %}
+
+{% block scripts %}
+<script>
+function moveNode(nodeId, sequence, direction) {
+    const url = `/cms/help-center/move/${nodeId}`;
+    const payload = {
+      new_sequence: (direction === 'up') ? sequence - 1 : sequence + 1,
+      direction,
+    };
+
+    // prevent sequence backward
+    if (sequence < 0) return;
+
+    htmx.ajax('POST', url, {
+      values: payload,
+      target: '#help-center-table',
+      swap: 'innerHTML'
+    })
+}
+</script>
+{% endblock %}

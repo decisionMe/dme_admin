@@ -1,5 +1,19 @@
-{% macro render_node(node) %}
+{% macro render_node(node, node_index, total_nodes) %}
+  {% set can_go_back = node_index > 0 %}
+  {% set can_go_forward = node_index < total_nodes - 1 %}
   <tr>
+    <td align="center">
+      <button
+        onclick="moveNode({{ node.id }}, {{ node.sequence }}, 'up')"
+        class="mr-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" {% if not can_go_back %}disabled{% endif %}>
+        <i class="fa fa-arrow-up text-gray-500"></i>
+      </button>
+      <button
+        onclick="moveNode({{ node.id }}, {{ node.sequence }}, 'down')"
+        class="mr-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" {% if not can_go_forward %}disabled{% endif %}>
+        <i class="fa fa-arrow-down text-gray-500"></i>
+      </button>
+    </td>
     <td class="p-4 pl-{{ 4 + (node.level * 4) }} whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-200">
       {{ node.title }}
     </td>
@@ -19,6 +33,6 @@
   </tr>
   
   {% for child in node.children %}
-    {{ render_node(child) }}
+    {{ render_node(child, loop.index0, node.children|length) }}
   {% endfor %}
 {% endmacro %}
