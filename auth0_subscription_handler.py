@@ -93,7 +93,7 @@ def create_auth0_subscription_router(
             try:
                 # Get subscription details from Stripe
                 subscription = stripe.Subscription.retrieve(subscription_id)
-                
+
                 # Create subscription record
                 from models.subscription import Subscription
                 subscription_record = Subscription(
@@ -105,7 +105,7 @@ def create_auth0_subscription_router(
                     payment_status='paid',
                     auto_renew=True
                 )
-                
+
                 db.merge(subscription_record)
                 db.commit()
                 logger.info(f"Subscription record created for user {user_info['sub']}")
@@ -125,7 +125,7 @@ def create_auth0_subscription_router(
                             return RedirectResponse(url=landing_url)
 
             # Redirect to app dashboard/main page
-            redirect_url = f"{app_url}/dashboard"  # Adjust this to your main app's first page
+            redirect_url = f"{app_url}"  # Adjust this to your main app's first page
             logger.info(f"Redirecting to main app: {redirect_url}")
             return RedirectResponse(url=redirect_url)
 
