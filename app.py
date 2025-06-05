@@ -337,13 +337,19 @@ async def cms_create_help_center_node(request: Request, title: str = Form(...), 
     try:
         parent_id = None if parent_id == 0 else parent_id
 
+        if parent_id is not None:
+            sequence = db.query(TreeNode).filter_by(parent_id=parent_id).count()
+        else:
+            sequence = db.query(TreeNode).filter_by(parent_id=None).count()
+
         node = TreeNode(
             title=title,
             parent_id=parent_id,
             is_document=node_type=="document",
             is_url=node_type=="url",
             html_content=html_content,
-            external_url=external_url
+            external_url=external_url,
+            sequence=sequence
         )
 
         db.add(node)
@@ -389,6 +395,61 @@ async def cms_update_help_center_node(request: Request, node_id: int, title: str
         return templates.TemplateResponse(
             "components/error_message.html",
             {"request": request, "message": "Failed to update node."}
+        )
+
+@app.post("/cms/help-center/move/{node_id}")
+async def cms_move_help_center_node(request: Request, node_id: int, new_sequence: int = Form(...), direction: str = Form(...), db: Session = Depends(get_db)):
+    try:
+        node = TreeNode.get_node_by_id(node_id, db)
+
+        if not node:
+            return RedirectResponse(url="/cms/help-center", status_code=status.HTTP_302_FOUND)
+
+        base_query = db.query(TreeNode).filter(
+            TreeNode.parent_id == node.parent_id
+        ).filter(TreeNode.id != node_id)
+
+        nodes = base_query.order_by(TreeNode.sequence.asc()).all()
+
+        if direction == "up":
+            initial_sequence = new_sequence + 1
+
+            for n in nodes:
+                if n.sequence >= new_sequence:
+                    n.sequence = initial_sequence
+                    initial_sequence += 1
+                    db.add(n)
+
+            db.commit()
+        elif direction == "down":
+            initial_sequence = 0
+
+            for n in nodes:
+                if initial_sequence == new_sequence:
+                    initial_sequence += 1
+
+                n.sequence = initial_sequence
+                initial_sequence += 1
+                db.add(n)
+
+            db.commit()
+
+        # set the new sequence
+        node.sequence = new_sequence
+
+        db.add(node)
+        db.commit()
+
+        return templates.TemplateResponse(
+            "components/help_center_table.html",
+            {"request": request, "nodes": TreeNode.get_nodes(db)}
+        )
+
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {str(e)}")
+        return templates.TemplateResponse(
+            "components/error_message.html",
+            {"request": request, "message": "Failed to move node."}
         )
 
 @app.delete("/cms/help-center/delete/{node_id}")

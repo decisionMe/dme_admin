@@ -3,6 +3,7 @@
 <table class="w-full border bg-white border-gray-200 mb-4">
   <thead>
     <tr>
+      <th class="text-left p-4 border-b border-gray-300"></th>
       <th class="text-left p-4 border-b border-gray-300">Title</th>
       <th class="text-left p-4 border-b border-gray-300">Type</th>
       <th class="text-left p-4 border-b border-gray-300">Level</th>
@@ -11,7 +12,7 @@
   </thead>
   <tbody class="divide-y divide-gray-100">
     {% for node in nodes %}
-      {{ render_node(node) }}
+      {{ render_node(node, loop.index0, nodes|length) }}
     {% endfor %}
   </tbody>
 </table>

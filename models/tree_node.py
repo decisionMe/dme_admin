@@ -19,6 +19,7 @@ class TreeNode(Base):
     is_url = Column(Boolean, default=False)
     external_url = Column(String(2048), nullable=True)
     html_content = Column(Text, nullable=True)
+    sequence = Column(Integer, nullable=True)
 
     # Self-referential relationship
     parent_id = Column(Integer, ForeignKey('tree_nodes.id'), nullable=True)
@@ -40,15 +41,45 @@ class TreeNode(Base):
         else:
             return self.parent.get_path() + [self]
 
+    def reset_sequence(db: Session):
+        sequence = 0
+        root_nodes = db.query(TreeNode).filter(TreeNode.parent_id == None).order_by(TreeNode.id.asc()).all()
+
+        def set_children_sequence(node):
+            local_sequence = 0
+            # get all children to that `node.id`
+            children = db.query(TreeNode).filter(TreeNode.parent_id == node.id).order_by(TreeNode.id.asc()).all()
+
+            for child in children:
+                child.sequence = local_sequence
+
+                db.add(child)
+                db.commit()
+
+                local_sequence += 1
+                # recursive call to the child node
+                set_children_sequence(child)
+
+        # root node fetch
+        for node in root_nodes:
+            node.sequence = sequence
+
+            db.add(node)
+            db.commit()
+
+            sequence += 1
+            # in case we have children, set their sequence
+            set_children_sequence(node)
+
     def get_nodes(db: Session, self_id: int = None):
         from models.tree_node import TreeNode
 
         # Fetch nodes without parent
-        root_nodes = db.query(TreeNode).filter(TreeNode.parent_id == None, TreeNode.id != self_id).order_by(TreeNode.title).all()
+        root_nodes = db.query(TreeNode).filter(TreeNode.parent_id == None, TreeNode.id != self_id).order_by(TreeNode.sequence.asc(), TreeNode.parent_id.asc()).all()
         
         # Fetch children nodes
         def get_children(node, level=1):
-            children = db.query(TreeNode).filter(TreeNode.parent_id == node.id, TreeNode.id != self_id).order_by(TreeNode.title).all()
+            children = db.query(TreeNode).filter(TreeNode.parent_id == node.id, TreeNode.id != self_id).order_by(TreeNode.sequence.asc()).all()
             
             return [
                 {
@@ -60,6 +91,8 @@ class TreeNode(Base):
                     "external_url": child.external_url,
                     "html_content": child.html_content,
                     "level": level,
+                    "sequence": child.sequence,
+                    "parent_id": child.parent_id,
                     "children": get_children(child, level + 1)
                 } for child in children
             ]
@@ -74,6 +107,8 @@ class TreeNode(Base):
                 "external_url": node.external_url,
                 "html_content": node.html_content,
                 "level": 0,
+                "sequence": node.sequence,
+                "parent_id": node.parent_id,
                 "children": get_children(node, 1)
             } for node in root_nodes
         ]
