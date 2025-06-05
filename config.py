@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     REDIRECT_URI: str
     APP_URL: str
     
+    # Magic Link Configuration
+    MAGIC_LINK_SECRET: str
+    CLIENT_APP_URL: str
+    
     class Config:
         env_file = ".env"
 

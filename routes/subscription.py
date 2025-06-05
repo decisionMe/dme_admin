@@ -23,6 +23,7 @@ from services.auth0_service import (
     exchange_code_for_tokens,
     APP_URL
 )
+from services.magic_link_service import generate_magic_link, MagicLinkError
 
 # Configure stripe
 stripe.api_key = os.getenv("STRIPE_API_KEY")
@@ -211,10 +212,42 @@ async def auth0_callback(
         db.commit()
         logger.debug(f"User status updated to AUTH0_ACCOUNT_LINKED")
 
-        # Redirect to app dashboard
-        redirect_url = f"{APP_URL}/dashboard"
-        logger.info(f"Redirecting to dashboard: {redirect_url}")
-        return RedirectResponse(url=redirect_url)
+        # Create subscription record for the client app
+        logger.info(f"Creating subscription record for client app")
+        try:
+            # Get subscription details from Stripe
+            subscription = stripe.Subscription.retrieve(subscription_id)
+
+            # Create subscription record
+            subscription_record = Subscription(
+                user_id=user_info["sub"],  # auth0_id as user_id
+                payment_method=subscription_id,  # Stripe subscription ID
+                status=subscription.status if hasattr(subscription, 'status') else 'active',
+                start_date=datetime.fromtimestamp(subscription.start_date) if hasattr(subscription, 'start_date') and subscription.start_date else datetime.now(),
+                end_date=datetime.fromtimestamp(subscription.current_period_end) if hasattr(subscription, 'current_period_end') and subscription.current_period_end else None,
+                payment_status='paid',
+                auto_renew=True
+            )
+
+            db.merge(subscription_record)
+            db.commit()
+            logger.info(f"Subscription record created for user {user_info['sub']}")
+        except Exception as e:
+            logger.error(f"Failed to create subscription record: {e}")
+            # Don't fail the auth flow if subscription record creation fails
+
+        # Generate magic link and redirect to client app
+        try:
+            logger.info(f"Generating magic link for user {user_info['sub']}")
+            magic_link = generate_magic_link(user_info["sub"], user_info.get("email", user.email))
+            logger.info(f"Magic link generated successfully, redirecting to client app")
+            return RedirectResponse(url=magic_link)
+        except MagicLinkError as e:
+            logger.error(f"Magic link generation failed: {e}")
+            # Fall back to dashboard redirect if magic link fails
+            redirect_url = f"{APP_URL}/dashboard"
+            logger.info(f"Falling back to dashboard redirect: {redirect_url}")
+            return RedirectResponse(url=redirect_url)
 
     except Exception as e:
         logger.error(f"Error in Auth0 callback: {e}", exc_info=True)
