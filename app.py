@@ -831,6 +831,10 @@ async def test_checkout():
         content = f.read()
     return HTMLResponse(content)
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
 # Run the application
 if __name__ == "__main__":
     import uvicorn
