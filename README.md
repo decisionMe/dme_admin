@@ -25,7 +25,7 @@ An administrative interface for managing DecisionMe prompts and handling subscri
    ```bash
    cp example.env .env
    ```
-   
+
    Open the `.env` file and update the values:
    - `ADMIN_PASSWORD`: Set a secure password for the admin interface
    - `DATABASE_URL`: Set the connection string for your database (should match the main DecisionMe application database)
@@ -42,9 +42,9 @@ An administrative interface for managing DecisionMe prompts and handling subscri
    ```
 
 6. **Access the admin interface**
-   
+
    Open your browser and navigate to [http://localhost:8000](http://localhost:8000)
-   
+
    You will be prompted to enter the admin password that you configured in the `.env` file.
 
 ## Features
