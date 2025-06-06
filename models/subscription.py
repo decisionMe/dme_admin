@@ -9,7 +9,7 @@ class Subscription(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     plan_id = Column(Integer, ForeignKey("plans.id"))
-    user_id = Column(String, ForeignKey("users.id", onupdate="CASCADE"), nullable=True)
+    user_id = Column(String, ForeignKey("subscription_users.subscription_id", onupdate="CASCADE"), nullable=True)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)
     start_date = Column(DateTime(timezone=True), server_default=func.now())
     end_date = Column(DateTime(timezone=True))
